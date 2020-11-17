@@ -36,7 +36,6 @@ def main() :
 			pass
 
 		if arguments[0] == "cat":
-			# precisa descobrir como achar o arquivo
 			index = findFile(FAT, blocks, arguments[1])
 			# content = locateContent(FAT, index, content, blocks)
 			# content = 'name|fat|creat|acces|update|size|dasdasdasdasdas'
@@ -94,6 +93,10 @@ def loadFATandBitmap(data, FAT, bitmap):
 def findFile(FAT, blocks, filename):
 
 	filePathList = filename.split('/')
+	if filePathList[-1] == '':
+		filePathList.pop()
+		filePathList[-1] += '/'
+
 	index = blocks[0].find('{')
 	startIndex = 0
 	found = 0
@@ -101,11 +104,12 @@ def findFile(FAT, blocks, filename):
 	block_index = 0
 	iter_filePath = 0
 	fileList = blocks[0][index+1:]
-	# print(fileList)
+	print(fileList)
+
+	# tratar o caso que tem mais de um arquivo na lista entao o separador ; entra na conta
 	while found == 0:
 
-		# if fileList[-1] != '}':
-			# fat_index = int(blocks[block_index].split('|')[1])
+		fat_index = int(blocks[block_index].split('|')[1])
 
 		content = locateContent(FAT, fat_index, '', blocks)
 		fileList += content
@@ -113,11 +117,12 @@ def findFile(FAT, blocks, filename):
 
 		if iter_filePath+1 < len(filePathList)-1 and filePathList[iter_filePath+1] + '/' in fileList:
 
-			aux  = fileList.split("|")
-			aux_iter = iter(aux)
+			# ainda nao achamos, estamos navegando os subdiretorios
+			aux = fileList.split(';')
 			for i in aux_iter :
-				if i == filePathList[iter_filePath+1] + '/':
-					block_index = int(next(aux_iter))
+				if filePathList[iter_filePath+1] + '/'in i :
+					file = i.split('|')
+					block_index = int(file[1])
 					index = blocks[block_index].find("{")
 					fileList = blocks[block_index][index+1:]
 					iter_filePath += 1
@@ -126,15 +131,18 @@ def findFile(FAT, blocks, filename):
 
 		elif iter_filePath+1 == len(filePathList)-1 and filePathList[iter_filePath+1] in fileList:
 
-			aux  = fileList.split("|")
-			aux_iter = iter(aux)
-			for i in aux_iter :
-				if i == filePathList[iter_filePath+1]:
-					block_index = int(next(aux_iter))
+			# achamos o que procuravamos
+			aux = fileList.split(';')
+			for i in aux :
+				if filePathList[iter_filePath+1] + '/'in i or filePathList[iter_filePath+1] in i :
+					file = i.split('|')
+					block_index = int(file[1])
 					found = 1 
 					break
 
 		else :
+
+			# se todos falharem que dizer que nao existe arquivo com o caminho especificado
 			block_index = -1
 			found = 1
 
