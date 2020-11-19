@@ -2,8 +2,11 @@ def main() :
 	close = 0
 	data = ''
 	arguments = ''
-	blocks = []
+	global FAT
+	global blocks
+	global bitmap 
 	FAT = [-1 for i in range(25000)]
+	blocks = []
 	bitmap = [1 for i in range(25000)]
 	filename = ''
 	totalUsed = 0
@@ -22,7 +25,7 @@ def main() :
 					data = data.split('\\')
 					blocks = data[2:]
 					print(blocks)
-					FAT, bitmap = loadFATandBitmap(data, FAT, bitmap)
+					FAT, bitmap = loadFATandBitmap(data)
 					print(FAT[:10], bitmap[:10])
 			except:
 				print("Não foi possível montar o sistema de arquivos")
@@ -37,7 +40,7 @@ def main() :
 			pass
 
 		if arguments[0] == "cat":
-			content = getFileParsed(FAT, blocks, arguments[1])
+			content = getFileParsed(arguments[1])
 			print(content[-1])
 
 		if arguments[0] == "touch":
@@ -47,13 +50,12 @@ def main() :
 			pass
 
 		if arguments[0] == "ls":
-			listDirectory(FAT, blocks, arguments[1])
+			listDirectory(arguments[1])
 			pass
 			# descobrir como achar o arquivo
 
 		if arguments[0] == "find":
-			dir_content = getDirParsed(FAT, blocks, arguments[1])
-			searchRec(dir_content, arguments[2])
+			search(arguments[1], arguments[2])
 			pass
 
 		if arguments[0] == "df":
@@ -77,7 +79,7 @@ def main() :
 
 
 
-def loadFATandBitmap(data, FAT, bitmap):
+def loadFATandBitmap(data):
 	bitmap_string = data[0]
 	FAT_string = data[1].split('|')
 	for i in range(len(FAT_string)):
@@ -89,8 +91,8 @@ def loadFATandBitmap(data, FAT, bitmap):
 	return FAT, bitmap
 
 
-def findFile(FAT, blocks, filename):
-
+def findFile(filename):
+	print("tamo recebendo", filename)
 	if filename == '/':
 		return 0
 
@@ -112,7 +114,7 @@ def findFile(FAT, blocks, filename):
 
 		fat_index = int(blocks[block_index].split('|')[1])
 
-		content = getRemainingContent(FAT, fat_index, '', blocks)
+		content = getRemainingContent(fat_index, '')
 		fileList += content
 		fileList = fileList[:-1]
 
@@ -149,7 +151,7 @@ def findFile(FAT, blocks, filename):
 	return block_index
 
 
-def getRemainingContent(FAT, initialIndex, initialData, blocks):
+def getRemainingContent(initialIndex, initialData):
 	index = FAT[initialIndex]
 
 	if index == -1:
@@ -162,8 +164,8 @@ def getRemainingContent(FAT, initialIndex, initialData, blocks):
 
 	return finalData
 
-def listDirectory(FAT, blocks, dirname):
-	content = getDirParsed(FAT, blocks, dirname)
+def listDirectory(dirname):
+	content = getDirParsed(dirname)
 
 	if content:
 		print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
@@ -171,8 +173,8 @@ def listDirectory(FAT, blocks, dirname):
 			print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
 
 
-def getDirParsed(FAT, blocks, dirname):
-	block_index = findFile(FAT, blocks, dirname)
+def getDirParsed(dirname):
+	block_index = findFile(dirname)
 
 	if block_index == -1:
 		print("O diretório não existe")
@@ -183,7 +185,7 @@ def getDirParsed(FAT, blocks, dirname):
 	content = file_block[content_index:]
 	file_block = file_block.split("|")
 	fat_index = int(file_block[1])
-	content = getRemainingContent(FAT, fat_index, content, blocks)
+	content = getRemainingContent(fat_index, content)
 	content = content.split(";")
 	content[0] = content[0][1:]
 	content[-1] = content[-1][:-1]
@@ -193,8 +195,8 @@ def getDirParsed(FAT, blocks, dirname):
 
 	return content
 
-def getFileParsed(FAT, blocks, filename):
-	block_index = findFile(FAT, blocks, filename)
+def getFileParsed(filename):
+	block_index = findFile(filename)
 
 	if block_index == -1:
 		print("O arquivo não existe")
@@ -204,15 +206,37 @@ def getFileParsed(FAT, blocks, filename):
 	aux = file_block
 	file_block = file_block.split("|")
 	fat_index = int(file_block[1])
-	content = getRemainingContent(FAT, fat_index, aux, blocks)
+	content = getRemainingContent(fat_index, aux)
 	content = content.split("|")
 
 	return content
 
 
-def searchRec(dir_content, file_name):
-	print(dir_content)		
+def searchRec(content, dir_name, file_name):
+	if content[0] == file_name and content[0][-1] != "/":
+		print(dir_name)
+		return
 
+	elif content[0][-1] != "/":
+		return
+
+	dir_content = getDirParsed(dir_name)
+	
+	if dir_content:
+		for item in dir_content:
+			searchRec(item, dir_name + item[0], file_name)
+		
+
+
+def search(dir_name, file_name):
+	dir_content = getDirParsed(dir_name)
+
+	if dir_content:
+		for item in dir_content:
+			searchRec(item, dir_name + item[0], file_name)
 
 if __name__ == "__main__" :
 	main()
+
+
+
