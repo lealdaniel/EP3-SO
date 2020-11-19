@@ -4,7 +4,7 @@ def main() :
 	arguments = ''
 	blocks = []
 	FAT = [-1 for i in range(25000)]
-	bitmap = [0 for i in range(25000)]
+	bitmap = [1 for i in range(25000)]
 	filename = ''
 	totalUsed = 0
 
@@ -38,11 +38,12 @@ def main() :
 
 		if arguments[0] == "cat":
 			index = findFile(FAT, blocks, arguments[1])
-			# content = locateContent(FAT, index, content, blocks)
-			# content = 'name|fat|creat|acces|update|size|dasdasdasdasdas'
-			# content = content.split("|")
-			# content = ''.join(content[6])
-			print(index)
+			file_block = blocks[index]
+			file_block = file_block.split("|")
+			fat_index = int(file_block[1])
+			content = file_block[-1]
+			content = locateContent(FAT, index, content, blocks)
+			print(content)
 
 		if arguments[0] == "touch":
 			pass
@@ -122,7 +123,7 @@ def findFile(FAT, blocks, filename):
 
 			# ainda nao achamos, estamos navegando os subdiretorios
 			aux = fileList.split(';')
-			for i in aux_iter :
+			for i in aux:
 				if filePathList[iter_filePath+1] + '/'in i :
 					file = i.split('|')
 					block_index = int(file[1])
