@@ -42,7 +42,7 @@ def main() :
 			file_block = file_block.split("|")
 			fat_index = int(file_block[1])
 			content = file_block[-1]
-			content = locateContent(FAT, index, content, blocks)
+			content = getRemainingContent(FAT, fat_index, content, blocks)
 			print(content)
 
 		if arguments[0] == "touch":
@@ -115,7 +115,7 @@ def findFile(FAT, blocks, filename):
 
 		fat_index = int(blocks[block_index].split('|')[1])
 
-		content = locateContent(FAT, fat_index, '', blocks)
+		content = getRemainingContent(FAT, fat_index, '', blocks)
 		fileList += content
 		fileList = fileList[:-1]
 
@@ -145,8 +145,6 @@ def findFile(FAT, blocks, filename):
 					break
 
 		else :
-
-			# se todos falharem que dizer que nao existe arquivo com o caminho especificado
 			block_index = -1
 			found = 1
 
@@ -154,12 +152,12 @@ def findFile(FAT, blocks, filename):
 	return block_index
 
 
-def locateContent(FAT, initialIndex, initialData, blocks):
+def getRemainingContent(FAT, initialIndex, initialData, blocks):
+	index = FAT[initialIndex]
 
-	if initialIndex == -1:
+	if index == -1:
 		return initialData
 
-	index = initialIndex
 	finalData = initialData
 	while index >= 0:
 		finalData += blocks[index]
@@ -180,7 +178,7 @@ def listDirectory(FAT, blocks, dirname):
 	content = file_block[content_index:]
 	file_block = file_block.split("|")
 	fat_index = int(file_block[1])
-	content = locateContent(FAT, fat_index, content, blocks)
+	content = getRemainingContent(FAT, fat_index, content, blocks)
 	content = content.split(";")
 	content[0] = content[0][1:]
 	content[-1] = content[-1][:-1]
