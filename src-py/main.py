@@ -12,10 +12,11 @@ def main() :
 		arguments = input("[ep3]: ")
 		arguments = arguments.split(' ')
 		print(arguments)
+
 		if arguments[0] == "mount":
 			filename = arguments[1]
-			try :
-				with open(arguments[1], "r") as f:
+			try:
+				with open(filename, "r") as f:
 					data = f.read()
 					totalUsed = len(data)
 					data = data.split('\\')
@@ -107,7 +108,6 @@ def findFile(FAT, blocks, filename):
 	block_index = 0
 	iter_filePath = 0
 	fileList = blocks[0][index+1:]
-	print(fileList)
 
 	# tratar o caso que tem mais de um arquivo na lista entao o separador ; entra na conta
 	while found == 0:
@@ -166,9 +166,7 @@ def locateContent(FAT, initialIndex, initialData, blocks):
 
 	return finalData
 
-
 def listDirectory(FAT, blocks, dirname):
-
 	print(dirname)
 	block_index = findFile(FAT, blocks, dirname)
 
@@ -183,8 +181,12 @@ def listDirectory(FAT, blocks, dirname):
 	fat_index = int(file_block[1])
 	content = locateContent(FAT, fat_index, content, blocks)
 	content = content.split(";")
-
-	print("content ", content)
+	content[0] = content[0][1:]
+	content[-1] = content[-1][:-1]
+	print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
+	for item in content:
+		item = item.split("|")
+		print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
 
 
 if __name__ == "__main__" :
