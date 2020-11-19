@@ -37,13 +37,8 @@ def main() :
 			pass
 
 		if arguments[0] == "cat":
-			index = findFile(FAT, blocks, arguments[1])
-			file_block = blocks[index]
-			file_block = file_block.split("|")
-			fat_index = int(file_block[1])
-			content = file_block[-1]
-			content = getRemainingContent(FAT, fat_index, content, blocks)
-			print(content)
+			content = getFileParsed(FAT, blocks, arguments[1])
+			print(content[-1])
 
 		if arguments[0] == "touch":
 			pass
@@ -57,6 +52,8 @@ def main() :
 			# descobrir como achar o arquivo
 
 		if arguments[0] == "find":
+			dir_content = getDirParsed(FAT, blocks, arguments[1])
+			searchRec(dir_content, arguments[2])
 			pass
 
 		if arguments[0] == "df":
@@ -166,12 +163,22 @@ def getRemainingContent(FAT, initialIndex, initialData, blocks):
 	return finalData
 
 def listDirectory(FAT, blocks, dirname):
-	print(dirname)
+	content = getDirParsed(FAT, blocks, dirname)
+	print(content)
+
+	if content:
+		print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
+		for item in content:
+			item = item.split("|")
+			print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
+
+
+def getDirParsed(FAT, blocks, dirname):
 	block_index = findFile(FAT, blocks, dirname)
 
 	if block_index == -1:
 		print("O diretório não existe")
-		return
+		return None
 
 	file_block = blocks[block_index]
 	content_index = file_block.find("{")
@@ -182,10 +189,25 @@ def listDirectory(FAT, blocks, dirname):
 	content = content.split(";")
 	content[0] = content[0][1:]
 	content[-1] = content[-1][:-1]
-	print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
-	for item in content:
-		item = item.split("|")
-		print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
+
+	return content
+
+def getFileParsed(FAT, blocks, filename):
+	block_index = findFile(FAT, blocks, filename)
+
+	if block_index == -1:
+		print("O arquivo não existe")
+		return None
+
+	file_block = blocks[block_index]
+	aux = file_block
+	file_block = file_block.split("|")
+	fat_index = int(file_block[1])
+	content = getRemainingContent(FAT, fat_index, aux, blocks)
+	content = content.split("|")
+
+	return content
+
 
 
 if __name__ == "__main__" :
