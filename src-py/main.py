@@ -50,9 +50,9 @@ def main() :
 			pass
 
 		if arguments[0] == "ls":
+			listDirectory(FAT, blocks, arguments[1])
 			pass
 			# descobrir como achar o arquivo
-			listDirectory(blocks, arguments[1])
 
 		if arguments[0] == "find":
 			pass
@@ -91,6 +91,9 @@ def loadFATandBitmap(data, FAT, bitmap):
 
 
 def findFile(FAT, blocks, filename):
+
+	if filename == '/':
+		return 0
 
 	filePathList = filename.split('/')
 	if filePathList[-1] == '':
@@ -151,6 +154,7 @@ def findFile(FAT, blocks, filename):
 
 
 def locateContent(FAT, initialIndex, initialData, blocks):
+
 	if initialIndex == -1:
 		return initialData
 
@@ -163,18 +167,25 @@ def locateContent(FAT, initialIndex, initialData, blocks):
 	return finalData
 
 
-def listDirectory(blocks, dirname):
-	dirname = dirname.split('/')
-	print(dirname, blocks)
-	init_block = blocks[0].split("|")
-	filelist = init_block[5:]
-	print(init_block, filelist)
-	if int(init_block[1]) >= 0:
-		# fudeu
-		pass
+def listDirectory(FAT, blocks, dirname):
 
-	# data = [b.split("|") for b in blocks if dirname[1]+'/' == b.split("|")[0]]
-	# print(data)
+	print(dirname)
+	block_index = findFile(FAT, blocks, dirname)
+
+	if block_index == -1:
+		print("O diretório não existe")
+		return
+
+	file_block = blocks[block_index]
+	content_index = file_block.find("{")
+	content = file_block[content_index:]
+	file_block = file_block.split("|")
+	fat_index = int(file_block[1])
+	content = locateContent(FAT, fat_index, content, blocks)
+	content = content.split(";")
+
+	print("content ", content)
+
 
 if __name__ == "__main__" :
 	main()
