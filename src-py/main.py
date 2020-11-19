@@ -164,12 +164,10 @@ def getRemainingContent(FAT, initialIndex, initialData, blocks):
 
 def listDirectory(FAT, blocks, dirname):
 	content = getDirParsed(FAT, blocks, dirname)
-	print(content)
 
 	if content:
 		print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
 		for item in content:
-			item = item.split("|")
 			print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
 
 
@@ -189,6 +187,9 @@ def getDirParsed(FAT, blocks, dirname):
 	content = content.split(";")
 	content[0] = content[0][1:]
 	content[-1] = content[-1][:-1]
+	for i in range(len(content)):
+		content[i] = content[i].split("|")
+
 
 	return content
 
@@ -208,6 +209,9 @@ def getFileParsed(FAT, blocks, filename):
 
 	return content
 
+
+def searchRec(dir_content, file_name):
+	print(dir_content)		
 
 
 if __name__ == "__main__" :
