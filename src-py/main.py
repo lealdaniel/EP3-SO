@@ -1,3 +1,5 @@
+from datetime import datetime
+
 def main() :
 	close = 0
 	data = ''
@@ -44,19 +46,25 @@ def main() :
 			print(content[-1])
 
 		if arguments[0] == "touch":
+			content = getFileParsed(arguments[1])
+			current_time = datetime.now()
+			if content:
+				content[4] = current_time
+				# salvar no arquivo
+			else:
+				# criar arquivo e salvar
+				pass
 			pass
 
 		if arguments[0] == "rm":
-			pass
+			removeFileContent(arguments[1])
+			removeFileFromDirectory(arguments[1])
 
 		if arguments[0] == "ls":
 			listDirectory(arguments[1])
-			pass
-			# descobrir como achar o arquivo
 
 		if arguments[0] == "find":
 			search(arguments[1], arguments[2])
-			pass
 
 		if arguments[0] == "df":
 			freeSpace = sum(bitmap)*4096
@@ -92,7 +100,6 @@ def loadFATandBitmap(data):
 
 
 def findFile(filename):
-	print("tamo recebendo", filename)
 	if filename == '/':
 		return 0
 
@@ -234,6 +241,78 @@ def search(dir_name, file_name):
 	if dir_content:
 		for item in dir_content:
 			searchRec(item, dir_name + item[0], file_name)
+
+
+def removeFileContent(file_name):
+	block_index = findFile(file_name)
+	file_block = blocks[block_index]
+	aux = file_block
+	file_block = file_block.split("|")
+	fat_index = int(file_block[1])
+	while fat_index != -1:
+		next_index = FAT[fat_index]
+		bitmap[fat_index] = 1
+		FAT[fat_index] = -1
+		blocks[fat_index] = ""
+		fat_index = next_index
+
+
+def removeFileFromDirectory(file_name):
+	dir_name = file_name.split("/")
+	aux_file_name = dir_name[-1]
+	dir_name = dir_name[:-1]
+	dir_name = "/".join(dir_name)
+	dir_index = findFile(dir_name)
+
+	file_block = blocks[dir_index]
+	content_index = file_block.find("{")
+	content = file_block[content_index:]
+	file_block_split = file_block.split("|")
+	fat_index = int(file_block_split[1])
+	content = content.split(";")
+
+	for i in range(len(content)):
+		if aux_file_name in content[i]:
+			content_len = len(content)
+			content = content[:i] + content[i+1:]
+			
+			if i == 0:
+				file_block = file_block[:content_index] + '{' + ";".join(content)
+			elif i == content_len - 1:
+				file_block = file_block[:content_index] + ";".join(content) + '}'
+
+			else:
+				file_block = file_block[:content_index] + ";".join(content)
+			
+			blocks[dir_index] = file_block
+			return
+			
+	prev_index = fat_index
+	fat_index = FAT[fat_index]
+
+	while fat_index != -1:
+		next_index = FAT[fat_index]
+		content = blocks[fat_index]
+		content = content.split(";")
+
+		for i in range(len(content)):
+			if aux_file_name in content[i]:
+				content = content[:i] + content[i+1:]
+				content_len = len(content)
+				file_block = ";".join(content)
+
+				if next_index == -1 and content_len - 1 == 0:
+					blocks[prev_index] += '}'
+					FAT[prev_index] = -1
+					bitmap[fat_index] = 1
+					file_block = ""
+
+				blocks[fat_index] = file_block
+				return
+
+		prev_index = fat_index
+		fat_index = next_index
+
 
 if __name__ == "__main__" :
 	main()
