@@ -40,8 +40,6 @@ def main() :
 
 		if arguments[0] == "rmdir":
 			rmdir(arguments[1])
-			# print(blocks)
-			pass
 
 		if arguments[0] == "cat":
 			content = getFileParsed(arguments[1])
@@ -68,6 +66,9 @@ def main() :
 
 		if arguments[0] == "find":
 			search(arguments[1], arguments[2])
+
+		if arguments[0] == "test":
+			print(getDirParsed(arguments[1]))
 
 		if arguments[0] == "df":
 			freeSpace = sum(bitmap)*4096
@@ -193,11 +194,13 @@ def getDirParsed(dirname):
 		return None
 
 	file_block = blocks[block_index]
+	print(file_block)
 	content_index = file_block.find("{")
 	content = file_block[content_index:]
 	file_block = file_block.split("|")
 	fat_index = int(file_block[1])
 	content = getRemainingContent(fat_index, content)
+	print(content)
 	content = content.split(";")
 	content[0] = content[0][1:]
 	content[-1] = content[-1][:-1]
@@ -255,7 +258,7 @@ def removeFileContent(file_name):
 	file_block = blocks[block_index]
 	# aux = file_block
 	file_block = file_block.split("|")
-	print(file_block)
+	print(file_block, file_name)
 	fat_index = int(file_block[1])
 	while fat_index != -1:
 		next_index = FAT[fat_index]
@@ -338,7 +341,8 @@ def rmdirRec(item, dir_name):
 		return
 	
 	dir_content = getDirParsed(dir_name + item[0])
-	print("alo2", item)
+	print(dir_name + item[0])
+	# print("alo2", item)
 	for item in dir_content:
 		rmdirRec(item, dir_name)
 
