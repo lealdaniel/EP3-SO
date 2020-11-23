@@ -50,9 +50,8 @@ def main() :
 			current_time = datetime.now()
 			if content:
 				content[4] = current_time
-				# salvar no arquivo
 			else:
-				# criar arquivo e salvar
+				# criar arquivo
 				pass
 			pass
 
@@ -181,7 +180,6 @@ def listDirectory(dirname):
 	if content:
 		print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
 		if len(content) > 1:
-			print(content)
 			for item in content:
 				print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
 
@@ -333,15 +331,12 @@ def removeFileFromDirectory(file_name):
 
 
 def rmdirRec(item, dir_name):
-	print("alo", item)
 	if item[0][-1] != "/":
-		print("entrei aqui")
 		removeFileContent(dir_name + item[0]) 
 		return
 	
 	dir_content = getDirParsed(dir_name + item[0])
 	print(dir_name + item[0])
-	# print("alo2", item)
 	for item in dir_content:
 		rmdirRec(item, dir_name)
 
@@ -355,7 +350,6 @@ def rmdir(dir_name):
 		rmdirRec(item, dir_name)
 	removeFileContent(dir_name)	
 	removeFileFromDirectory(dir_name)
-	# print(blocks)
 
 
 if __name__ == "__main__" :
