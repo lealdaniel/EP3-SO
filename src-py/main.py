@@ -39,6 +39,8 @@ def main() :
 			pass
 
 		if arguments[0] == "rmdir":
+			rmdir(arguments[1])
+			print(blocks)
 			pass
 
 		if arguments[0] == "cat":
@@ -314,8 +316,30 @@ def removeFileFromDirectory(file_name):
 		fat_index = next_index
 
 
+def rmdirRec(item, dir_name):
+	print("alo", item)
+	if (item[0] != "")
+	if item[0][-1] != "/":
+		removeFileContent(dir_name + item[0]) 
+		return
+	
+	dir_content = getDirParsed(dir_name + item[0])
+	for item in dir_content:
+		rmdirRec(item, dir_name)
+
+	removeFileContent(dir_name + item[0])	
+
+
+def rmdir(dir_name):
+	dir_content = getDirParsed(dir_name)
+	print(dir_content)
+	for item in dir_content:
+		rmdirRec(item, dir_name)
+
+	removeFileContent(dir_name + item[0])	
+
+
 if __name__ == "__main__" :
 	main()
-
 
 
