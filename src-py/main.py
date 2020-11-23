@@ -200,10 +200,9 @@ def getDirParsed(dirname):
 	file_block = file_block.split("|")
 	fat_index = int(file_block[1])
 	content = getRemainingContent(fat_index, content)
-	print(content)
 	content = content.split(";")
 	content[0] = content[0][1:]
-	content[-1] = content[-1][:-1]
+	content.pop()
 	for i in range(len(content)):
 		content[i] = content[i].split("|")
 
@@ -351,13 +350,12 @@ def rmdirRec(item, dir_name):
 
 def rmdir(dir_name):
 	dir_content = getDirParsed(dir_name)
-	# print(dir_content)
-	print(dir_content)
+	print("cheguei ", dir_content)
 	for item in dir_content:
 		rmdirRec(item, dir_name)
 	removeFileContent(dir_name)	
 	removeFileFromDirectory(dir_name)
-	print(blocks)
+	# print(blocks)
 
 
 if __name__ == "__main__" :
