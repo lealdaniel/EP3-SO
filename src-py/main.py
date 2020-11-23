@@ -40,7 +40,7 @@ def main() :
 
 		if arguments[0] == "rmdir":
 			rmdir(arguments[1])
-			print(blocks)
+			# print(blocks)
 			pass
 
 		if arguments[0] == "cat":
@@ -61,6 +61,7 @@ def main() :
 		if arguments[0] == "rm":
 			removeFileContent(arguments[1])
 			removeFileFromDirectory(arguments[1])
+			print(blocks)
 
 		if arguments[0] == "ls":
 			listDirectory(arguments[1])
@@ -174,12 +175,14 @@ def getRemainingContent(initialIndex, initialData):
 	return finalData
 
 def listDirectory(dirname):
-	content = getDirParsed(dirname)
 
+	content = getDirParsed(dirname)
 	if content:
 		print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
-		for item in content:
-			print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
+		if len(content) > 1:
+			print(content)
+			for item in content:
+				print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
 
 
 def getDirParsed(dirname):
@@ -247,9 +250,12 @@ def search(dir_name, file_name):
 
 def removeFileContent(file_name):
 	block_index = findFile(file_name)
+	if block_index == -1:
+		print("DEU RUIM")
 	file_block = blocks[block_index]
-	aux = file_block
+	# aux = file_block
 	file_block = file_block.split("|")
+	print(file_block)
 	fat_index = int(file_block[1])
 	while fat_index != -1:
 		next_index = FAT[fat_index]
@@ -260,10 +266,18 @@ def removeFileContent(file_name):
 
 
 def removeFileFromDirectory(file_name):
+
+	if file_name[-1] == '/':
+		file_name = file_name[:-1]
+
 	dir_name = file_name.split("/")
 	aux_file_name = dir_name[-1]
 	dir_name = dir_name[:-1]
 	dir_name = "/".join(dir_name)
+
+	if dir_name == '':
+		dir_name = '/'
+
 	dir_index = findFile(dir_name)
 
 	file_block = blocks[dir_index]
@@ -318,12 +332,13 @@ def removeFileFromDirectory(file_name):
 
 def rmdirRec(item, dir_name):
 	print("alo", item)
-	if (item[0] != "")
 	if item[0][-1] != "/":
+		print("entrei aqui")
 		removeFileContent(dir_name + item[0]) 
 		return
 	
 	dir_content = getDirParsed(dir_name + item[0])
+	print("alo2", item)
 	for item in dir_content:
 		rmdirRec(item, dir_name)
 
@@ -332,11 +347,13 @@ def rmdirRec(item, dir_name):
 
 def rmdir(dir_name):
 	dir_content = getDirParsed(dir_name)
+	# print(dir_content)
 	print(dir_content)
 	for item in dir_content:
 		rmdirRec(item, dir_name)
-
-	removeFileContent(dir_name + item[0])	
+	removeFileContent(dir_name)	
+	removeFileFromDirectory(dir_name)
+	print(blocks)
 
 
 if __name__ == "__main__" :
