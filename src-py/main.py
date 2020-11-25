@@ -40,20 +40,46 @@ def main() :
 
 		if arguments[0] == "rmdir":
 			rmdir(arguments[1])
+			print(blocks)
 
 		if arguments[0] == "cat":
-			content = getFileParsed(arguments[1])
+			index = findFile(arguments[1])
+			content = getFileParsed(arguments[1], index)
+			updateAcessedTime(index)
 			print(content[-1])
 
 		if arguments[0] == "touch":
-			content = getFileParsed(arguments[1])
-			current_time = datetime.now()
-			if content:
-				content[4] = current_time
+			index = findFile(arguments[1])
+			if index >= 0:
+				updateModifiedTime(index)
+				updateAcessedTime(index)
+				print(blocks[index])
 			else:
-				# criar arquivo
-				pass
-			pass
+				print(arguments[1])
+				new_name = arguments[1]
+				new_name = arguments[1].split('/')
+				new_name = new_name[-1]
+
+				block_index = checkForFreeSpace(1)[0]
+				new_block = createFileBlock(new_name, '', block_index)
+				directory_input = new_block[:-1] + ';'
+
+				if block_index:
+					blocks[block_index] = new_block
+					FAT[block_index] = -1
+					bitmap[block_index] = 0
+				else:
+					print("Não existe espaço para a criação desse arquivo")
+
+				# se nao podemos adicionar no diretorio, temos que reverter as mudanças
+				if addFileToDirectory(directory_input, arguments[1], block_index) == -1:
+					blocks[block_index] = ''
+					FAT[block_index] = -1
+					bitmap[block_index] = 1
+					print("Não existe espaço para a criação desse arquivo")
+
+				print(blocks)
+
 
 		if arguments[0] == "rm":
 			removeFileContent(arguments[1])
@@ -61,13 +87,13 @@ def main() :
 			print(blocks)
 
 		if arguments[0] == "ls":
-			listDirectory(arguments[1])
+			try :
+				listDirectory(arguments[1])
+			except:
+				pass
 
 		if arguments[0] == "find":
 			search(arguments[1], arguments[2])
-
-		if arguments[0] == "test":
-			print(getDirParsed(arguments[1]))
 
 		if arguments[0] == "df":
 			freeSpace = sum(bitmap)*4096
@@ -88,6 +114,86 @@ def main() :
 		if arguments[0] == "sai":
 			exit(0)
 
+def createFileBlock(file_name, content, block_index):
+	current_time = datetime.now()
+	current_time = str(int(current_time.timestamp()))
+	new_created_time = current_time
+	new_update_time = current_time
+	new_access_time = current_time
+	new_size = str(len(content))
+	new_content = content
+	new_block = [file_name, str(block_index), new_created_time, new_update_time, new_access_time, new_size, new_content]
+	new_block = '|'.join(new_block)
+
+	return new_block
+
+
+
+def addFileToDirectory(directory_input, file_name, added_index):
+
+	dir_name = file_name.split('/')
+	dir_name = dir_name[:-1]
+	dir_name = '/'.join(dir_name)
+	if len(dir_name) == 0:
+		dir_name = "/"
+
+	dir_index = findFile(dir_name)
+	content = blocks[dir_index]
+	content_split = content.split("|")
+	
+	fat_index = -1
+	next_index = int(content_split[1])
+	# acha o ultimo bloco do diretório
+	while next_index >= 0:
+		fat_index = next_index
+		next_index = FAT[fat_index]
+
+	content = blocks[fat_index]
+	content = content[:-1]
+	if len(content) + len(directory_input) < 40:
+		content += directory_input + '}'
+		print(content, fat_index)
+		blocks[fat_index] = content
+		return 0
+
+	blocks[fat_index] = content
+
+
+	index = checkForFreeSpace(1)[0]
+
+	if index >= 0:
+		blocks.insert(index, directory_input + '}')
+		FAT[fat_index] = index
+		FAT[index] = -1
+		bitmap[index] = 0
+
+	else:
+		return -1
+
+def checkForFreeSpace(number_blocks):
+	indexes = []
+	for i in range(len(bitmap)):
+		if bitmap[i]:
+			indexes.append(i)
+		if len(indexes) >= number_blocks:
+			return indexes
+
+	return None
+
+
+def updateAcessedTime(block_index):
+	current_time = datetime.now()
+	new_block = blocks[block_index].split('|')
+	new_block[4] = str(int(current_time.timestamp()))
+	new_block = '|'.join(new_block)
+	blocks[block_index] = new_block
+
+def updateModifiedTime(block_index):
+	current_time = datetime.now()
+	new_block = blocks[block_index].split('|')
+	new_block[3] = str(int(current_time.timestamp()))
+	new_block = '|'.join(new_block)
+	blocks[block_index] = new_block
 
 
 def loadFATandBitmap(data):
@@ -176,16 +282,17 @@ def getRemainingContent(initialIndex, initialData):
 
 def listDirectory(dirname):
 
-	content = getDirParsed(dirname)
+	content = getDirParsed(dirname, findFile(dirname))
 	if content:
 		print(f"{'NOME' : <10}{'TAMANHO' : ^20}{'ÚLTIMO ACESSO' : >5}")
-		if len(content) > 1:
+		if len(content) >= 1:
 			for item in content:
 				print(f"{item[0] : <10} {item[5] : ^20} {item[4] : >5}")
 
 
-def getDirParsed(dirname):
-	block_index = findFile(dirname)
+def getDirParsed(dirname, block_index):
+
+	# block_index = findFile(dirname)
 
 	if block_index == -1:
 		print("O diretório não existe")
@@ -207,15 +314,14 @@ def getDirParsed(dirname):
 
 	return content
 
-def getFileParsed(filename):
-	block_index = findFile(filename)
+def getFileParsed(filename, block_index):
+	# block_index = findFile(filename)
 
 	if block_index == -1:
 		print("O arquivo não existe")
 		return None
 
 	file_block = blocks[block_index]
-	aux = file_block
 	file_block = file_block.split("|")
 	fat_index = int(file_block[1])
 	content = getRemainingContent(fat_index, aux)
@@ -232,7 +338,7 @@ def searchRec(content, dir_name, file_name):
 	elif content[0][-1] != "/":
 		return
 
-	dir_content = getDirParsed(dir_name)
+	dir_content = getDirParsed(dir_name, findFile(dir_name))
 	
 	if dir_content:
 		for item in dir_content:
@@ -241,7 +347,7 @@ def searchRec(content, dir_name, file_name):
 
 
 def search(dir_name, file_name):
-	dir_content = getDirParsed(dir_name)
+	dir_content = getDirParsed(dir_name, findFile(dir_name))
 
 	if dir_content:
 		for item in dir_content:
@@ -249,11 +355,9 @@ def search(dir_name, file_name):
 
 
 def removeFileContent(file_name):
+
 	block_index = findFile(file_name)
-	if block_index == -1:
-		print("DEU RUIM")
 	file_block = blocks[block_index]
-	# aux = file_block
 	file_block = file_block.split("|")
 	print(file_block, file_name)
 	fat_index = int(file_block[1])
@@ -279,6 +383,8 @@ def removeFileFromDirectory(file_name):
 		dir_name = '/'
 
 	dir_index = findFile(dir_name)
+	updateModifiedTime(dir_index)
+	updateAcessedTime(dir_index)
 
 	file_block = blocks[dir_index]
 	content_index = file_block.find("{")
@@ -331,12 +437,15 @@ def removeFileFromDirectory(file_name):
 
 
 def rmdirRec(item, dir_name):
+
 	if item[0][-1] != "/":
+		print("entrei aqui")
 		removeFileContent(dir_name + item[0]) 
 		return
 	
-	dir_content = getDirParsed(dir_name + item[0])
+	dir_content = getDirParsed(dir_name + item[0], findFile(dir_name + item[0]))
 	print(dir_name + item[0])
+	# print("alo2", item)
 	for item in dir_content:
 		rmdirRec(item, dir_name)
 
@@ -344,12 +453,14 @@ def rmdirRec(item, dir_name):
 
 
 def rmdir(dir_name):
-	dir_content = getDirParsed(dir_name)
-	print("cheguei ", dir_content)
+
+	dir_content = getDirParsed(dir_name, findFile(dir_name + item[0]))
+
 	for item in dir_content:
 		rmdirRec(item, dir_name)
 	removeFileContent(dir_name)	
 	removeFileFromDirectory(dir_name)
+	# print(blocks)
 
 
 if __name__ == "__main__" :
