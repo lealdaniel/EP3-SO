@@ -25,15 +25,15 @@ def main() :
 
 		if arguments[0] == "mount":
 			filename = arguments[1]
-			# try:
-			with open(filename, "r") as f:
-				data = f.read()
-				data = data.split('\\')
-				print(data)
-				FAT, bitmap, blocks = loadFATandBitmap(data)
-					# print(FAT[:10], bitmap[:10])
-			# except:
-			# 	print("Não foi possível montar o sistema de arquivos")
+			try:
+				with open(filename, "r") as f:
+					data = f.read()
+					data = data.split('\\')
+					print(data)
+					FAT, bitmap, blocks = loadFATandBitmap(data)
+					f.close()
+			except:
+				initEmptyFile()
 
 		if arguments[0] == "cp":
 			copyFile(arguments[1], arguments[2])
@@ -649,7 +649,6 @@ def rmdirRec(item, dir_name):
 
 
 def rmdir(dir_name):
-
 	global dirNumber	
 	if dir_name[-1] == '/':
 
@@ -663,6 +662,14 @@ def rmdir(dir_name):
 		removeFileContent(dir_name)	
 		removeFileFromDirectory(dir_name)
 		print(blocks)
+
+def initEmptyFile():
+	bitmap[0] = 0
+	for i in range(25000):
+		blocks.append('')
+	
+	blocks[0] = createDirectoryInput('/', 0, 0)
+	print(blocks[0])
 
 
 if __name__ == "__main__" :
