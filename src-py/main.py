@@ -86,18 +86,16 @@ def main() :
 		if arguments[0] == "umount":
 			if filename != '':
 				with open(filename, 'w') as f:
-					FAT_string = "|".join(FAT)
-					bitmap_string = ''.join(bitmap)
+					FAT_string = "|".join(str(i) for i in FAT)
+					bitmap_string = ''.join(str(i) for i in bitmap)
 					blocks_string = '\\'.join(blocks)
-					f.write(FAT_string + '\\' + bitmap_string + '\\' + blocks_string)
+					print(blocks_string[:100])
+					f.write(bitmap_string + '\\' + FAT_string + '\\' + blocks_string)
 			else :
 				print("Nenhum sistema de arquivos foi montado")
 
 		if arguments[0] == "sai":
 			exit(0)
-
-		else:
-			print(bitmap[:10])
 
 def copyFile(real_file, file_name):
 
