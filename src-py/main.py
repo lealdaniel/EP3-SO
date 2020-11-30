@@ -9,9 +9,6 @@ def main() :
 	global bitmap 
 	global fileNumber
 	global dirNumber
-	FAT = [-1 for i in range(24900)]
-	blocks = []
-	bitmap = [1 for i in range(24900)]
 	filename = ''
 	fileNumber = 0
 	dirNumber = 0
@@ -22,6 +19,9 @@ def main() :
 
 		if arguments[0] == "mount":
 			filename = arguments[1]
+			FAT = [-1 for i in range(24900)]
+			blocks = []
+			bitmap = [1 for i in range(24900)]
 			try:
 				with open(filename, "r") as f:
 					data = f.read()
