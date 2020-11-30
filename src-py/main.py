@@ -388,19 +388,15 @@ def updateAcessedTime(file_name):
 			index = FAT[index]
 
 def loadFATandBitmap(data):
-
-	global totalUsed
 	FAT_string = ''
 	bitmap_string = ''
 	for block in data[:7]:
 		bitmap_string += block
 
-	print(data[13:14])
-	for block in data[7:14]:
+	for block in data[7:26]:
 		FAT_string += block
-	totalUsed += len(FAT_string) + len(bitmap) + 14
 	FAT_string = FAT_string.split("|")
-	blocks = data[14:]
+	blocks = data[26:]
 	for i in range(len(FAT_string)):
 		FAT[i] = int(FAT_string[i])
 
