@@ -7,14 +7,12 @@ def main() :
 	global FAT
 	global blocks
 	global bitmap 
-	global totalUsed
 	global fileNumber
 	global dirNumber
 	FAT = [-1 for i in range(24900)]
 	blocks = []
 	bitmap = [1 for i in range(24900)]
 	filename = ''
-	totalUsed = 0
 	fileNumber = 0
 	dirNumber = 0
 
@@ -29,7 +27,6 @@ def main() :
 					data = f.read()
 					data = data.split('\\')
 					FAT, bitmap, blocks = loadFATandBitmap(data)
-					f.close()
 			except:
 				initEmptyFile()
 
@@ -62,11 +59,10 @@ def main() :
 
 		if arguments[0] == "df":
 			wasted_list = [4000 - len(blocks[i]) for i in range(len(bitmap)) if bitmap[i] == 0]
-			wastedSpace = sum(wasted_list)
-			# 14*4000 é o tanto que ocupam o fat e o bitmap
-			freeSpace = sum(bitmap)*4000 - 25000 # ou 24900
+			wastedSpace = sum(wasted_list) + 3100 + 20
+			# 24925 são as divisórias, 3100 é o bitmap, 20 é o desperdicio da FAT			
+			freeSpace = sum(bitmap)*4000 - 24925 
 
-			# wastedSpace = sum([1 for i in bitmap if i == 0])*4000 - totalUsed + 14*4000
 			print("Quantidade de diretórios:", dirNumber)
 			print("Quantidade de arquivos:", fileNumber)
 			print("Espaço livre:", freeSpace)
@@ -80,11 +76,12 @@ def main() :
 					bitmap_string = ''
 					for i in range(1333, len(FAT), 1333):
 						FAT_string += '|'.join(str(j) for j in FAT[last_i:i])
+						FAT_string += '|'
 						FAT_string += '\\'
 						last_i = i
 
 					FAT_string += '|'.join(str(j) for j in FAT[last_i:])
-
+					
 					last_i = 0
 					for i in range(4000, len(bitmap), 4000):
 						bitmap_string += ''.join(str(j) for j in bitmap[last_i:i])
@@ -105,7 +102,6 @@ def copyFile(real_file, file_name):
 
 	with open(real_file, "r") as file:
 
-		global totalUsed
 		global fileNumber
 		data = file.read()
 		blocks_, blocks_size = len(data), 4000
@@ -119,8 +115,8 @@ def copyFile(real_file, file_name):
 		if last_i < len(data):
 			data_blocks.append(data[last_i:])
 		# o tamanho de 100MB menos os separadores
-		maxsize = 100000000 - 25000
-		if totalUsed + len(data) + len(data_blocks) > maxsize:
+		freeSpace = sum(bitmap)*4000 - 24925 
+		if len(data) + len(data_blocks) > freeSpace:
 			print("Não há espaço para adicionar o arquivo")
 			return 
 
@@ -141,10 +137,7 @@ def copyFile(real_file, file_name):
 				FAT[indexes[i]] = indexes[i+1]
 			blocks[indexes[-1]] = data_blocks[-1]
 			FAT[indexes[-1]] = -1
-			totalUsed += len(data) + len(data_blocks)
-			dir_name = getDirName(file_name)
 			fileNumber += 1
-			updateDirSize(dir_name, len(data))
 
 
 def getDirName(file_name):
@@ -167,7 +160,6 @@ def getFileName(file_name):
 
 def touchFile(file_name):
 
-	global totalUsed
 	global fileNumber
 	file_index = findFile(file_name)
 	if file_index >= 0:
@@ -188,8 +180,6 @@ def touchFile(file_name):
 			print("Não existe espaço para a criação desse arquivo")
 
 		if block_index:
-			totalUsed += len(directory_input)
-			print(block_index)
 			blocks[block_index] = ''
 			FAT[block_index] = -1
 			bitmap[block_index] = 0
@@ -198,7 +188,6 @@ def touchFile(file_name):
 			print("Não existe espaço para a criação desse arquivo")
 
 def mkdir(dir_name):
-	global totalUsed
 	global dirNumber
 	new_name = dir_name
 	new_name = dir_name.split('/')
@@ -218,7 +207,6 @@ def mkdir(dir_name):
 		print("Não existe espaço para a criação desse arquivo")
 
 	if block_index:
-		totalUsed += len(directory_input)
 		blocks[block_index] = ''
 		FAT[block_index] = -1
 		bitmap[block_index] = 0
@@ -286,8 +274,8 @@ def addFileToDirectory(directory_input, file_name):
 def checkForFreeSpace(number_blocks):
 
 	# o tamanho de 100 MB menos os separadores de blocos
-	maxsize = 100000000 - 25000
-	if number_blocks*4000 + totalUsed > maxsize:
+	freeSpace = sum(bitmap)*4000 - 24925 
+	if number_blocks*4000 > freeSpace:
 		return None
 
 	indexes = []
@@ -300,34 +288,6 @@ def checkForFreeSpace(number_blocks):
 			return indexes
 
 	return None
-
-def updateDirSize(file_name, size):
-	dir_name = getDirName(file_name)
-	# dir_name = getDirName(dir_name)
-	file_name = getFileName(file_name)
-	block_index = findFile(dir_name)
-	found = 0
-	index = block_index
-	while found == 0 and index >= 0:
-		dir_block = blocks[index]
-		dir_list = dir_block.split(';')
-
-		for i in range(len(dir_list)):
-			item = dir_list[i].split('|')
-			if item != [''] and (item[0] == file_name or item[0] == file_name + '/'):
-				new_item = item
-				new_item[5] = str(int(item[5]) + size)
-				new_item = '|'.join(new_item)
-				dir_list[i] = new_item
-				found = 1
-				break
-
-		if found == 1:
-			dir_list = ';'.join(dir_list)
-			blocks[index] = dir_list 
-
-		else:
-			index = FAT[index]
 
 def updateModifiedTime(file_name):
 
@@ -659,6 +619,8 @@ def initEmptyFile():
 		blocks.append('')
 	
 	blocks[0] = createDir('/', 0)
+	global dirNumber
+	dirNumber += 1
 
 
 if __name__ == "__main__" :
