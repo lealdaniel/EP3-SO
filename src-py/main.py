@@ -553,7 +553,7 @@ def removeFileFromDirectory(file_name):
 			
 			blocks[dir_index] = file_block
 			return
-			
+	fat_index = dir_index
 	prev_index = fat_index
 	fat_index = FAT[fat_index]
 
