@@ -59,9 +59,9 @@ def main() :
 
 		if arguments[0] == "df":
 			wasted_list = [4000 - len(blocks[i]) for i in range(len(bitmap)) if bitmap[i] == 0]
-			wastedSpace = sum(wasted_list) + 3100 + 20
-			# 24925 são as divisórias, 3100 é o bitmap, 20 é o desperdicio da FAT			
-			freeSpace = sum(bitmap)*4000 - 24925 
+			wastedSpace = sum(wasted_list) + 3100 + 149
+			# 24944 são as divisórias, 3100 é o bitmap, 149 é o desperdicio da FAT			
+			freeSpace = sum(bitmap)*4000 - 24944 
 
 			print("Quantidade de diretórios:", dirNumber)
 			print("Quantidade de arquivos:", fileNumber)
@@ -74,7 +74,7 @@ def main() :
 					last_i = 0
 					FAT_string = ''
 					bitmap_string = ''
-					for i in range(1333, len(FAT), 1333):
+					for i in range(666, len(FAT), 666):
 						FAT_string += '|'.join(str(j) for j in FAT[last_i:i])
 						FAT_string += '|'
 						FAT_string += '\\'
@@ -115,7 +115,7 @@ def copyFile(real_file, file_name):
 		if last_i < len(data):
 			data_blocks.append(data[last_i:])
 		# o tamanho de 100MB menos os separadores
-		freeSpace = sum(bitmap)*4000 - 24925 
+		freeSpace = sum(bitmap)*4000 - 24944 
 		if len(data) + len(data_blocks) > freeSpace:
 			print("Não há espaço para adicionar o arquivo")
 			return 
@@ -172,8 +172,7 @@ def touchFile(file_name):
 		block_index = checkForFreeSpace(1)
 		if block_index:
 			block_index = block_index[0]
-		# index teste
-		# block_index = 7
+
 		directory_input = createFile(new_name, block_index, 0)
 		if addFileToDirectory(directory_input, file_name) == -1:
 			bitmap[block_index] = 1
@@ -261,11 +260,13 @@ def addFileToDirectory(directory_input, file_name):
 		content += directory_input
 		blocks[fat_index] = content
 		return 0
+
 	content += directory_input[:left]
 	blocks[fat_index] = content
 	index = checkForFreeSpace(1)
 	if index:
 		index = index[0]
+	if index:
 		blocks[index] = directory_input[left:]
 		FAT[index] = -1
 		FAT[fat_index] = index
@@ -276,7 +277,7 @@ def addFileToDirectory(directory_input, file_name):
 def checkForFreeSpace(number_blocks):
 
 	# o tamanho de 100 MB menos os separadores de blocos
-	freeSpace = sum(bitmap)*4000 - 24925 
+	freeSpace = sum(bitmap)*4000 - 24944 
 	if number_blocks*4000 > freeSpace:
 		return None
 
@@ -355,10 +356,10 @@ def loadFATandBitmap(data):
 	for block in data[:7]:
 		bitmap_string += block
 
-	for block in data[7:26]:
+	for block in data[7:44]:
 		FAT_string += block
 	FAT_string = FAT_string.split("|")
-	blocks = data[26:]
+	blocks = data[44:]
 	for i in range(len(FAT_string)):
 		FAT[i] = int(FAT_string[i])
 
@@ -439,7 +440,6 @@ def getRemainingContent(initialIndex, initialData):
 def listDirectory(dirname):
 
 	content = getDirParsed(dirname, findFile(dirname))
-	# print(content)
 	if dirname == '/':
 		content = content[1:]
 
@@ -539,7 +539,6 @@ def removeFileFromDirectory(file_name):
 	updateModifiedTime(dir_name)
 	updateAcessedTime(dir_name)
 
-	#update time here
 	file_block = blocks[dir_index]
 	content = file_block
 	content = content.split(";")
