@@ -261,13 +261,10 @@ def addFileToDirectory(directory_input, file_name):
 		blocks[fat_index] = content
 		return 0
 
-	content += directory_input[:left]
-	blocks[fat_index] = content
 	index = checkForFreeSpace(1)
 	if index:
 		index = index[0]
-	if index:
-		blocks[index] = directory_input[left:]
+		blocks[index] = directory_input
 		FAT[index] = -1
 		FAT[fat_index] = index
 		bitmap[index] = 0
