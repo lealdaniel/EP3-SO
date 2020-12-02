@@ -256,17 +256,19 @@ def addFileToDirectory(directory_input, file_name):
 		next_index = FAT[fat_index]
 
 	content = blocks[fat_index]
-	if len(content) + len(directory_input) < 4000:
+	left = 4000 - (len(content) + len(directory_input))
+	if left >= 0:
 		content += directory_input
 		blocks[fat_index] = content
 		return 0
-
+	content += directory_input[:left]
+	blocks[fat_index] = content
 	index = checkForFreeSpace(1)
 	if index:
 		index = index[0]
-	if index:
-		blocks[index] = directory_input
+		blocks[index] = directory_input[left:]
 		FAT[index] = -1
+		FAT[fat_index] = index
 		bitmap[index] = 0
 	else :
 		return -1
@@ -437,6 +439,7 @@ def getRemainingContent(initialIndex, initialData):
 def listDirectory(dirname):
 
 	content = getDirParsed(dirname, findFile(dirname))
+	# print(content)
 	if dirname == '/':
 		content = content[1:]
 
