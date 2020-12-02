@@ -59,10 +59,9 @@ def main() :
 
 		if arguments[0] == "df":
 			wasted_list = [4000 - len(blocks[i]) for i in range(len(bitmap)) if bitmap[i] == 0]
-			wastedSpace = sum(wasted_list) + 3100 + 149
-			# 24944 são as divisórias, 3100 é o bitmap, 149 é o desperdicio da FAT			
-			freeSpace = sum(bitmap)*4000 - 24944 
-
+			# 24944 são as divisórias, 3100 é o bitmap, 150 é o desperdicio da FAT			
+			wastedSpace = sum(wasted_list) + 3100 + 150
+			freeSpace = sum(bitmap)*4000
 			print("Quantidade de diretórios:", dirNumber)
 			print("Quantidade de arquivos:", fileNumber)
 			print("Espaço livre:", freeSpace)
@@ -353,10 +352,11 @@ def loadFATandBitmap(data):
 	for block in data[:7]:
 		bitmap_string += block
 
-	for block in data[7:44]:
+	for block in data[7:45]:
 		FAT_string += block
 	FAT_string = FAT_string.split("|")
-	blocks = data[44:]
+	blocks = data[45:]
+	print(len(data[43]))
 	for i in range(len(FAT_string)):
 		FAT[i] = int(FAT_string[i])
 
