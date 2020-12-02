@@ -59,7 +59,7 @@ def main() :
 
 		if arguments[0] == "df":
 			wasted_list = [4000 - len(blocks[i]) for i in range(len(bitmap)) if bitmap[i] == 0]
-			# 24944 são as divisórias, 3100 é o bitmap, 150 é o desperdicio da FAT			
+			# 3100 é o bitmap, 150 é o desperdicio da FAT			
 			wastedSpace = sum(wasted_list) + 3100 + 150
 			freeSpace = sum(bitmap)*4000
 			print("Quantidade de diretórios:", dirNumber)
@@ -113,8 +113,7 @@ def copyFile(real_file, file_name):
 
 		if last_i < len(data):
 			data_blocks.append(data[last_i:])
-		# o tamanho de 100MB menos os separadores
-		freeSpace = sum(bitmap)*4000 - 24944 
+		freeSpace = sum(bitmap)*4000
 		if len(data) + len(data_blocks) > freeSpace:
 			print("Não há espaço para adicionar o arquivo")
 			return 
@@ -272,8 +271,7 @@ def addFileToDirectory(directory_input, file_name):
 
 def checkForFreeSpace(number_blocks):
 
-	# o tamanho de 100 MB menos os separadores de blocos
-	freeSpace = sum(bitmap)*4000 - 24944 
+	freeSpace = sum(bitmap)*4000
 	if number_blocks*4000 > freeSpace:
 		return None
 
