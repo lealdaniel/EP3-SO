@@ -43,6 +43,7 @@ def main() :
 			index = findFile(arguments[1])
 			content = getRemainingContent(index, blocks[index])
 			updateAcessedTime(arguments[1])
+			print(content)
 
 		if arguments[0] == "touch":
 			touchFile(arguments[1])
