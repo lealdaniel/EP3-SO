@@ -161,8 +161,8 @@ def touchFile(file_name):
 	global fileNumber
 	file_index = findFile(file_name)
 	if file_index >= 0:
-		updateModifiedTime(index)
-		updateAcessedTime(index)
+		updateModifiedTime(file_name)
+		updateAcessedTime(file_name)
 	else:
 		new_name = file_name
 		new_name = file_name.split('/')
@@ -354,7 +354,6 @@ def loadFATandBitmap(data):
 		FAT_string += block
 	FAT_string = FAT_string.split("|")
 	blocks = data[45:]
-	print(len(data[43]))
 	for i in range(len(FAT_string)):
 		FAT[i] = int(FAT_string[i])
 
@@ -445,7 +444,7 @@ def listDirectory(dirname):
 				time = datetime.fromtimestamp(int(item[4]))
 				time_string = time.strftime("%d/%m/%Y, %H:%M:%S")
 				if item[0][-1] == '/':
-					print(f"{item[0] : <10} {'NULL' : ^20} {time_string : >5}")
+					print(f"{item[0] : <10} {'' : ^20} {time_string : >5}")
 				else:
 					print(f"{item[0] : <10} {item[5] : ^20} {time_string : >5}")
 					
@@ -597,18 +596,16 @@ def rmdirRec(item, dir_name):
 
 def rmdir(dir_name):
 	global dirNumber	
-	if dir_name[-1] == '/':
 
-		index = findFile(dir_name)
-		dir_content = getDirParsed(dir_name, index)
-		for item in dir_content:
-			if item != ['']:
-				rmdirRec(item, dir_name)
+	index = findFile(dir_name)
+	dir_content = getDirParsed(dir_name, index)
+	for item in dir_content:
+		if item != ['']:
+			rmdirRec(item, dir_name)
 
-		dirNumber -= 1
-		removeFileContent(dir_name)	
-		removeFileFromDirectory(dir_name)
-		print(blocks)
+	dirNumber -= 1
+	removeFileContent(dir_name)	
+	removeFileFromDirectory(dir_name)
 
 def initEmptyFile():
 	bitmap[0] = 0
